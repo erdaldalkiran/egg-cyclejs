@@ -2,9 +2,14 @@ import Rx from 'rx';
 
 function main() {
     "use strict";
-    return Rx.Observable
-        .timer(0, 1000)
-        .map(index => `Seconds elapsed ${index}`);
+
+    let source = Rx.Observable
+        .timer(0, 1000);
+    return {
+        DOM: source
+            .map(index => `Seconds elapsed ${index}`),
+        console: source.map(index => index * 2)
+    };
 }
 
 function DOMEffects(text$) {
@@ -16,14 +21,14 @@ function DOMEffects(text$) {
     });
 }
 
-function consoleEffect (text$){
+function consoleEffect(text$) {
     "use strict";
 
     text$.subscribe(text => console.log(text));
 }
 
-const sink = main();
+const sinks = main();
 
-consoleEffect(sink)
-DOMEffects(sink);
+consoleEffect(sinks.console)
+DOMEffects(sinks.DOM);
 
