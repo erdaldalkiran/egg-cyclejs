@@ -12,7 +12,7 @@ function main() {
     };
 }
 
-function DOMEffects(text$) {
+function DOMDriver(text$) {
     text$.subscribe(text => {
         "use strict";
 
@@ -21,14 +21,21 @@ function DOMEffects(text$) {
     });
 }
 
-function consoleEffect(text$) {
+function consoleDriver(text$) {
     "use strict";
 
     text$.subscribe(text => console.log(text));
 }
 
-const sinks = main();
+const drivers = {
+    DOM: DOMDriver,
+    console: consoleDriver
+};
 
-consoleEffect(sinks.console)
-DOMEffects(sinks.DOM);
+function run(main, drivers) {
+    const sinks = main();
 
+    Object.keys(drivers).forEach(key => drivers[key](sinks[key]));
+}
+
+run(main, drivers);
