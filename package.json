@@ -17,7 +17,6 @@
   },
   "homepage": "https://github.com/erdalkiran/egg-cyclejs#readme",
   "devDependencies": {
-    "babel": "^6.3.26",
     "babel-preset-es2015": "^6.3.13",
     "babelify": "^7.2.0",
     "browserify": "^13.0.0",
