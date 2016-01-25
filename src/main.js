@@ -1,9 +1,9 @@
 import Rx from 'rx';
 
-function main(DOMSource$) {
+function main(source) {
     "use strict";
 
-    const observable = DOMSource$
+    const observable = source.DOM
         .startWith(null)
         .flatMapLatest(() => Rx.Observable.timer(0, 1000));
 
@@ -38,12 +38,25 @@ const drivers = {
 };
 
 function run(main, drivers) {
-    const proxyDOMSource = new Rx.Subject();
-    const sinks = main(proxyDOMSource);
-    const DOMSource = drivers.DOM(sinks.DOM);
-    DOMSource.subscribe(click => proxyDOMSource.onNext(click));
+    const proxySources = {};
+    Object.keys(drivers)
+        .forEach(key => {
+            "use strict";
 
-    drivers.console(sinks.console);
+            proxySources[key] = new Rx.Subject();
+        });
+
+    const sinks = main(proxySources);
+
+    Object.keys(drivers)
+        .forEach(key => {
+            "use strict";
+
+            const source = drivers[key](sinks[key]);
+            if (source) {
+                source.subscribe(event => proxySources[key].onNext(event));
+            }
+        });
 }
 
 run(main, drivers);
