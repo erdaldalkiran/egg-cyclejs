@@ -1,6 +1,26 @@
 import Rx from 'rx';
 import Cycle from '@cycle/core';
 
+function h(tagName, children) {
+    "use strict";
+    return {
+        tagName,
+        children
+    };
+}
+
+function span(children) {
+    "use strict";
+
+    return h('SPAN', children);
+}
+
+function h1(children) {
+    "use strict";
+
+    return h('H1', children);
+}
+
 function main(source) {
     "use strict";
 
@@ -11,15 +31,12 @@ function main(source) {
     return {
         DOM: observable
             .map(index => {
-                return {
-                    tagName: 'H1',
-                    children: [{
-                        tagName: 'SPAN',
-                        children: [
+                return h1([
+                    span([
                             `Seconds elapsed ${index}`
                         ]
-                    }]
-                };
+                    )]
+                );
             }),
         console: observable.map(index => index * 2)
     };
@@ -48,11 +65,11 @@ function DOMDriver(obj$) {
     });
 
     const DOMSource = {
-        selectEvents: function(tagName, eventType){
+        selectEvents: function (tagName, eventType) {
             "use strict";
 
             return Rx.Observable.fromEvent(document, eventType)
-                    .filter(event => event.target.tagName === tagName.toUpperCase());
+                .filter(event => event.target.tagName === tagName.toUpperCase());
         }
     };
     return DOMSource;
