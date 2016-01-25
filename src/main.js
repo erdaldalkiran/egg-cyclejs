@@ -4,7 +4,7 @@ import Cycle from '@cycle/core';
 function main(source) {
     "use strict";
 
-    const observable = source.DOM
+    const observable = source.DOM.selectEvents('span', 'mouseover')
         .startWith(null)
         .flatMapLatest(() => Rx.Observable.timer(0, 1000));
 
@@ -47,7 +47,14 @@ function DOMDriver(obj$) {
         container.appendChild(element);
     });
 
-    const DOMSource = Rx.Observable.fromEvent(document, 'click');
+    const DOMSource = {
+        selectEvents: function(tagName, eventType){
+            "use strict";
+
+            return Rx.Observable.fromEvent(document, eventType)
+                    .filter(event => event.target.tagName === tagName.toUpperCase());
+        }
+    };
     return DOMSource;
 }
 
