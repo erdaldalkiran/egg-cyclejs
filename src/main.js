@@ -2,40 +2,43 @@ import Rx from 'rx';
 import Cycle from '@cycle/core';
 import CycleDOM from '@cycle/dom';
 
-const {h, h1, span, makeDOMDriver} = CycleDOM;
+const {button, div,p, label, makeDOMDriver} = CycleDOM;
 
 function main(source) {
     "use strict";
 
-    const observable = source.DOM
-        .select('span')
-        .events('mouseover')
-        .startWith(null)
-        .flatMapLatest(() => Rx.Observable.timer(0, 1000));
+    const decrements$ = source.DOM
+        .select('.decrement')
+        .events('click')
+        .map(event => -1);
+
+    const increments$ = source.DOM
+        .select('.increment')
+        .events('click')
+        .map(event => 1);
+
+    const changeEvents$ = Rx.Observable.of(0)
+        .merge(decrements$)
+        .merge(increments$)
+        .scan((soFar, current) => soFar = soFar + current);
 
     return {
-        DOM: observable
-            .map(index => {
-                return h1([
-                    span([
-                            `Seconds elapsed ${index}`
-                        ]
-                    )]
-                );
-            }),
-        console: observable.map(index => index * 2)
+        DOM: changeEvents$.map(number =>
+            div([
+                button('.decrement', 'Decrement'),
+                button('.increment', 'Increment'),
+                p([
+                    label(`${number}`)
+                ])
+            ])
+        )
     };
+
 }
 
-function consoleDriver(text$) {
-    "use strict";
-
-    text$.subscribe(text => console.log(text));
-}
 
 const drivers = {
-    DOM: makeDOMDriver('#app'),
-    console: consoleDriver
+    DOM: makeDOMDriver('#app')
 };
 
 
