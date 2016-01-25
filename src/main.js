@@ -1,45 +1,62 @@
 import Rx from 'rx';
 import Cycle from '@cycle/core';
 import CycleDOM from '@cycle/dom';
+import CycleHTTPDriver from '@cycle/http';
 
-const {button, div,p, label, makeDOMDriver} = CycleDOM;
+const {button, h1, h4, a, div, makeDOMDriver} = CycleDOM;
+const {makeHTTPDriver} = CycleHTTPDriver;
 
-function main(source) {
-    "use strict";
+// DOM read effect: button clicked
+// HTTP write effect: request sent
+// HTTP read effect: response received
+// DOM write effect: data displayed
 
-    const decrements$ = source.DOM
-        .select('.decrement')
-        .events('click')
-        .map(event => -1);
+function main(sources) {
+    const clickEvent$ = sources.DOM
+        .select('.get-first').events('click');
 
-    const increments$ = source.DOM
-        .select('.increment')
-        .events('click')
-        .map(event => 1);
+    const request$ = clickEvent$.map(() => {
+        return {
+            url: 'http://jsonplaceholder.typicode.com/users/1',
+            method: 'GET',
+        };
+    });
 
-    const changeEvents$ = Rx.Observable.of(0)
-        .merge(decrements$)
-        .merge(increments$)
-        .scan((soFar, current) => soFar = soFar + current);
+    const response$$ = sources.HTTP
+        .filter(response$ => response$.request.url === 'http://jsonplaceholder.typicode.com/users/1');
+
+    const response$ = response$$.switch();
+    const firstUser$ = response$.map(response => response.body)
+        .startWith(null);
 
     return {
-        DOM: changeEvents$.map(number =>
+        DOM: firstUser$.map(firstUser =>
             div([
-                button('.decrement', 'Decrement'),
-                button('.increment', 'Increment'),
-                p([
-                    label(`${number}`)
+                button('.get-first', 'Get first user'),
+                firstUser === null ? null : div('.user-details', [
+                    h1('.user-name', firstUser.name),
+                    h4('.user-email', firstUser.email),
+                    a('.user-website', {href: firstUser.website}, firstUser.website)
                 ])
             ])
-        )
+        ),
+        HTTP: request$,
     };
-
 }
 
-
 const drivers = {
-    DOM: makeDOMDriver('#app')
-};
-
+    DOM: makeDOMDriver('#app'),
+    HTTP: makeHTTPDriver(),
+}
 
 Cycle.run(main, drivers);
+
+
+
+
+
+
+
+
+
+
