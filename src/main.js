@@ -14,6 +14,12 @@ function main(DOMSource$) {
     };
 }
 
+function DOMSource(){
+    "use strict";
+
+    return Rx.Observable.fromEvent(document, 'click');
+}
+
 function DOMDriver(text$) {
     text$.subscribe(text => {
         "use strict";
@@ -21,9 +27,6 @@ function DOMDriver(text$) {
         const container = document.querySelector('#app');
         container.textContent = text;
     });
-
-    const DOMSource = Rx.Observable.fromEvent(document, 'click');
-    return DOMSource;
 }
 
 function consoleDriver(text$) {
@@ -37,13 +40,11 @@ const drivers = {
     console: consoleDriver
 };
 
-function run(main, drivers) {
-    const proxyDOMSource = new Rx.Subject();
-    const sinks = main(proxyDOMSource);
-    const DOMSource = drivers.DOM(sinks.DOM);
-    DOMSource.subscribe(click => proxyDOMSource.onNext(click));
-
-    drivers.console(sinks.console);
+function run(main, drivers, source) {
+    'use strict';
+    
+    const sinks = main(source);
+    Object.keys(sinks).forEach(key => drivers[key](sinks[key]));
 }
 
-run(main, drivers);
+run(main, drivers, DOMSource());
