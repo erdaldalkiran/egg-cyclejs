@@ -1,14 +1,16 @@
 import Rx from 'rx';
 
-function main() {
+function main(DOMSource$) {
     "use strict";
 
-    let source = Rx.Observable
-        .timer(0, 1000);
+    const observable = DOMSource$
+        .startWith(null)
+        .flatMapLatest(() => Rx.Observable.timer(0, 1000));
+
     return {
-        DOM: source
+        DOM: observable
             .map(index => `Seconds elapsed ${index}`),
-        console: source.map(index => index * 2)
+        console: observable.map(index => index * 2)
     };
 }
 
@@ -19,6 +21,9 @@ function DOMDriver(text$) {
         const container = document.querySelector('#app');
         container.textContent = text;
     });
+
+    const DOMSource = Rx.Observable.fromEvent(document, 'click');
+    return DOMSource;
 }
 
 function consoleDriver(text$) {
@@ -33,9 +38,12 @@ const drivers = {
 };
 
 function run(main, drivers) {
-    const sinks = main();
+    const proxyDOMSource = new Rx.Subject();
+    const sinks = main(proxyDOMSource);
+    const DOMSource = drivers.DOM(sinks.DOM);
+    DOMSource.subscribe(click => proxyDOMSource.onNext(click));
 
-    Object.keys(drivers).forEach(key => drivers[key](sinks[key]));
+    drivers.console(sinks.console);
 }
 
 run(main, drivers);
