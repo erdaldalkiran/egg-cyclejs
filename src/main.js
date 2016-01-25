@@ -10,17 +10,41 @@ function main(source) {
 
     return {
         DOM: observable
-            .map(index => `Seconds elapsed ${index}`),
+            .map(index => {
+                return {
+                    tagName: 'H1',
+                    children: [{
+                        tagName: 'SPAN',
+                        children: [
+                            `Seconds elapsed ${index}`
+                        ]
+                    }]
+                };
+            }),
         console: observable.map(index => index * 2)
     };
 }
 
-function DOMDriver(text$) {
-    text$.subscribe(text => {
+function DOMDriver(obj$) {
+    obj$.subscribe(obj => {
         "use strict";
 
+        function createElement(obj) {
+            const element = document.createElement(obj.tagName);
+            obj.children
+                .filter(child => typeof  child === 'object')
+                .map(createElement)
+                .forEach(child => element.appendChild(child));
+            obj.children
+                .filter(child => typeof child === 'string')
+                .forEach(child => element.innerHTML += child);
+            return element;
+        }
+
         const container = document.querySelector('#app');
-        container.textContent = text;
+        container.innerHTML = '';
+        var element = createElement(obj);
+        container.appendChild(element);
     });
 
     const DOMSource = Rx.Observable.fromEvent(document, 'click');
