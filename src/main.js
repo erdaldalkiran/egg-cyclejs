@@ -1,4 +1,5 @@
 import Rx from 'rx';
+import Cycle from '@cycle/core';
 
 function main(source) {
     "use strict";
@@ -37,26 +38,5 @@ const drivers = {
     console: consoleDriver
 };
 
-function run(main, drivers) {
-    const proxySources = {};
-    Object.keys(drivers)
-        .forEach(key => {
-            "use strict";
 
-            proxySources[key] = new Rx.Subject();
-        });
-
-    const sinks = main(proxySources);
-
-    Object.keys(drivers)
-        .forEach(key => {
-            "use strict";
-
-            const source = drivers[key](sinks[key]);
-            if (source) {
-                source.subscribe(event => proxySources[key].onNext(event));
-            }
-        });
-}
-
-run(main, drivers);
+Cycle.run(main, drivers);
