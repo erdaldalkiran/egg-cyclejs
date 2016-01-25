@@ -17,10 +17,11 @@
   },
   "homepage": "https://github.com/erdalkiran/egg-cyclejs#readme",
   "devDependencies": {
+    "@cycle/core": "^6.0.0",
+    "@cycle/dom": "^9.0.2",
     "babel-preset-es2015": "^6.3.13",
     "babelify": "^7.2.0",
     "browserify": "^13.0.0",
-    "@cycle/core": "^6.0.0",
     "del": "^2.2.0",
     "gulp": "^3.9.0",
     "gulp-babel": "^6.1.1",

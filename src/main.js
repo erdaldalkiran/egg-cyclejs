@@ -1,30 +1,15 @@
 import Rx from 'rx';
 import Cycle from '@cycle/core';
+import CycleDOM from '@cycle/dom';
 
-function h(tagName, children) {
-    "use strict";
-    return {
-        tagName,
-        children
-    };
-}
-
-function span(children) {
-    "use strict";
-
-    return h('SPAN', children);
-}
-
-function h1(children) {
-    "use strict";
-
-    return h('H1', children);
-}
+const {h, h1, span, makeDOMDriver} = CycleDOM;
 
 function main(source) {
     "use strict";
 
-    const observable = source.DOM.selectEvents('span', 'mouseover')
+    const observable = source.DOM
+        .select('span')
+        .events('mouseover')
         .startWith(null)
         .flatMapLatest(() => Rx.Observable.timer(0, 1000));
 
@@ -42,39 +27,6 @@ function main(source) {
     };
 }
 
-function DOMDriver(obj$) {
-    obj$.subscribe(obj => {
-        "use strict";
-
-        function createElement(obj) {
-            const element = document.createElement(obj.tagName);
-            obj.children
-                .filter(child => typeof  child === 'object')
-                .map(createElement)
-                .forEach(child => element.appendChild(child));
-            obj.children
-                .filter(child => typeof child === 'string')
-                .forEach(child => element.innerHTML += child);
-            return element;
-        }
-
-        const container = document.querySelector('#app');
-        container.innerHTML = '';
-        var element = createElement(obj);
-        container.appendChild(element);
-    });
-
-    const DOMSource = {
-        selectEvents: function (tagName, eventType) {
-            "use strict";
-
-            return Rx.Observable.fromEvent(document, eventType)
-                .filter(event => event.target.tagName === tagName.toUpperCase());
-        }
-    };
-    return DOMSource;
-}
-
 function consoleDriver(text$) {
     "use strict";
 
@@ -82,7 +34,7 @@ function consoleDriver(text$) {
 }
 
 const drivers = {
-    DOM: DOMDriver,
+    DOM: makeDOMDriver('#app'),
     console: consoleDriver
 };
 
