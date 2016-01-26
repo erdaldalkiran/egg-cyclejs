@@ -39,7 +39,7 @@ function view(state$) {
         ]));
 }
 
-function main(sources) {
+function LabeledSlider(sources) {
     const change$ = intent(sources.DOM);
     const state$ =  model(change$, sources.props);
     const vtree$ = view(state$);
@@ -50,14 +50,21 @@ function main(sources) {
 }
 
 const drivers = {
-    DOM: makeDOMDriver('#app'),
-    props: () => Rx.Observable.of({
+    DOM: makeDOMDriver('#app')
+}
+
+function main(sources){
+    "use strict";
+
+    const props$ = Rx.Observable.of({
         label: 'Height',
         unit: 'cm',
         min: 140,
         max: 220,
         init: 170
-    })
+    });
+
+    return LabeledSlider({DOM: sources.DOM, props: props$});
 }
 
 Cycle.run(main, drivers);
