@@ -4,20 +4,23 @@ import CycleDOM from '@cycle/dom';
 
 const {input, label, div, h2, makeDOMDriver} = CycleDOM;
 
-function main(sources) {
-
-    const weigth$ = sources.DOM
+function intent(DOMSource) {
+    const weight$ = DOMSource
         .select('.weight')
         .events('input')
         .map(event => event.target.value);
 
-    const height$ = sources.DOM
+    const height$ = DOMSource
         .select('.height')
         .events('input')
         .map(event => event.target.value);
 
-    const state$ = Rx.Observable.combineLatest(
-        weigth$.startWith(70),
+    return {weight$, height$};
+}
+
+function model(weight$, height$) {
+    return Rx.Observable.combineLatest(
+        weight$.startWith(70),
         height$.startWith(170),
         (weight, height) => {
             "use strict";
@@ -30,21 +33,32 @@ function main(sources) {
             };
         }
     );
+}
+
+function view(state$) {
+    return state$.map(state =>
+        div([
+            div([
+                label(`Weight: ${state.weight} kg`),
+                input('.weight', {type: 'range', min: 40, max: 150, value: state.weight})
+            ]),
+            div([
+                label(`Height: ${state.height} cm`),
+                input('.height', {type: 'range', min: 140, max: 200, value: state.height})
+            ]),
+            h2(`BMI is ${state.bmi}`)
+        ])
+    );
+}
+function main(sources) {
+    const {weight$, height$} = intent(sources.DOM);
+
+    const state$ = model(weight$, height$);
+
+    const vtree$ = view(state$);
 
     return {
-        DOM: state$.map( state =>
-            div([
-                div([
-                    label(`Weight: ${state.weight} kg`),
-                    input('.weight', {type: 'range', min: 40, max: 150, value: state.weight})
-                ]),
-                div([
-                    label(`Height: ${state.height} cm`),
-                    input('.height', {type: 'range', min: 140, max: 200, value: state.height})
-                ]),
-                h2(`BMI is ${state.bmi}`)
-            ])
-        )
+        DOM: vtree$
     };
 }
 
