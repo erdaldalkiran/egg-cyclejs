@@ -56,15 +56,44 @@ const drivers = {
 function main(sources){
     "use strict";
 
-    const props$ = Rx.Observable.of({
+    const weightProps$ = Rx.Observable.of({
+        label: 'Weight',
+        unit: 'kg',
+        min: 40,
+        max: 150,
+        init: 70
+    });
+    const weightSinks = LabeledSlider({DOM: sources.DOM.select('.weight'), props: weightProps$});
+    const weightTree$ = weightSinks.DOM.map(vtree =>{
+        vtree.properties.className += ' weight';
+        return vtree;
+    });
+
+    const heightProps$ = Rx.Observable.of({
         label: 'Height',
         unit: 'cm',
         min: 140,
         max: 220,
         init: 170
     });
+    const heightSinks = LabeledSlider({DOM: sources.DOM.select('.height'), props: heightProps$});
+    const heightTree$ = heightSinks.DOM.map(vtree => {
+        vtree.properties.className += ' height';
+        return vtree;
+    });
 
-    return LabeledSlider({DOM: sources.DOM, props: props$});
+    const vtree$ = Rx.Observable.combineLatest(
+        weightTree$,
+        heightTree$,
+        (weightTree, heightTree) => div([
+            weightTree,
+            heightTree
+        ])
+    );
+
+    return {
+        DOM: vtree$
+    };
 }
 
 Cycle.run(main, drivers);
