@@ -5,56 +5,43 @@ import CycleDOM from '@cycle/dom';
 const {input, label, div, h2, makeDOMDriver} = CycleDOM;
 
 function intent(DOMSource) {
-    const weight$ = DOMSource
-        .select('.weight')
+    return DOMSource
+        .select('.slider')
         .events('input')
         .map(event => event.target.value);
-
-    const height$ = DOMSource
-        .select('.height')
-        .events('input')
-        .map(event => event.target.value);
-
-    return {weight$, height$};
 }
 
-function model(weight$, height$) {
+function model(change$, props$){
+    const initialValue$ = props$.map(prop => prop.init).first();
+    const value$ = initialValue$.concat(change$);
+
     return Rx.Observable.combineLatest(
-        weight$.startWith(70),
-        height$.startWith(170),
-        (weight, height) => {
-            "use strict";
-            const heightMeters = height * 0.01;
-            const bmi = Math.round(weight / Math.pow(heightMeters, 2));
+        value$,
+        props$,
+        (value, props) => {
             return {
-                bmi,
-                height,
-                weight
-            };
+                label: props.label,
+                min: props.min,
+                max: props.max,
+                unit: props.unit,
+                value: value
+            }
+
         }
     );
 }
 
 function view(state$) {
     return state$.map(state =>
-        div([
-            div([
-                label(`Weight: ${state.weight} kg`),
-                input('.weight', {type: 'range', min: 40, max: 150, value: state.weight})
-            ]),
-            div([
-                label(`Height: ${state.height} cm`),
-                input('.height', {type: 'range', min: 140, max: 200, value: state.height})
-            ]),
-            h2(`BMI is ${state.bmi}`)
-        ])
-    );
+        div('.labeled-slider', [
+            label('.label', `${state.label} ${state.value} ${state.unit}`),
+            input('.slider', {type: 'range', min: state.min, max: state.max, value: state.value})
+        ]));
 }
+
 function main(sources) {
-    const {weight$, height$} = intent(sources.DOM);
-
-    const state$ = model(weight$, height$);
-
+    const change$ = intent(sources.DOM);
+    const state$ =  model(change$, sources.props);
     const vtree$ = view(state$);
 
     return {
@@ -63,7 +50,14 @@ function main(sources) {
 }
 
 const drivers = {
-    DOM: makeDOMDriver('#app')
+    DOM: makeDOMDriver('#app'),
+    props: () => Rx.Observable.of({
+        label: 'Height',
+        unit: 'cm',
+        min: 140,
+        max: 220,
+        init: 170
+    })
 }
 
 Cycle.run(main, drivers);
