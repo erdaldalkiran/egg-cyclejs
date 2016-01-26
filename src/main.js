@@ -46,7 +46,8 @@ function LabeledSlider(sources) {
     const vtree$ = view(state$);
 
     return {
-        DOM: vtree$
+        DOM: vtree$,
+        value: state$.map(state => state.value)
     };
 }
 
@@ -67,6 +68,7 @@ function main(sources){
 
     const weightSinks = IsolatedLabeledSlider({DOM: sources.DOM, props: weightProps$});
     const weightTree$ = weightSinks.DOM;
+    const weightValue$ = weightSinks.value;
 
     const heightProps$ = Rx.Observable.of({
         label: 'Height',
@@ -78,13 +80,25 @@ function main(sources){
 
     const heightSinks = IsolatedLabeledSlider({DOM: sources.DOM, props: heightProps$});
     const heightTree$ = heightSinks.DOM;
+    const heightValue$ = heightSinks.value;
+
+    const bmi$ = Rx.Observable.combineLatest(
+        weightValue$,
+        heightValue$,
+        (weight, height) => {
+            const heightInMeters = height * 0.01;
+            return Math.round(weight / Math.pow(heightInMeters, 2));
+        }
+    );
 
     const vtree$ = Rx.Observable.combineLatest(
         weightTree$,
         heightTree$,
-        (weightTree, heightTree) => div([
+        bmi$,
+        (weightTree, heightTree, bmi) => div([
             weightTree,
-            heightTree
+            heightTree,
+            h2(`BMI is ${bmi}`)
         ])
     );
 
